@@ -1,0 +1,12 @@
+Package: stremohub
+Version: 3.0
+Architecture: amd64
+Maintainer: StremoHub <support@stremohub.local>
+Installed-Size: 4096
+Depends: python3 (>= 3.8), python3-gi, gir1.2-gtk-3.0, gir1.2-webkit2-4.0 | gir1.2-webkit2-4.1, ffmpeg, yt-dlp | python3-yt-dlp
+Section: multimedia
+Priority: optional
+Description: StremoHub v3 - SmartTube + Pikashow + PVR (amd64)
+ SmartTube-exact YouTube with SponsorBlock, Pikashow-exact with multiple
+ stream servers, and Kodi PVR-style IPTV with EPG and channel groups.
+ All APIs pre-configured. No setup required.

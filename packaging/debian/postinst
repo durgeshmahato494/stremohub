@@ -1,0 +1,59 @@
+#!/bin/bash
+set -e
+
+echo "Setting up StremoHub v3..."
+
+# Dirs — all user-writable data goes to init_db.py via user home
+# System dirs only for shared things
+mkdir -p /var/log/stremohub
+chmod 777 /var/log/stremohub
+
+# Install yt-dlp if not present (needed for YouTube direct streams)
+if ! command -v yt-dlp >/dev/null 2>&1; then
+  apt-get install -y yt-dlp 2>/dev/null || \
+  pip3 install yt-dlp --break-system-packages 2>/dev/null || \
+  curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp 2>/dev/null && \
+  chmod +x /usr/local/bin/yt-dlp 2>/dev/null || true
+  command -v yt-dlp >/dev/null 2>&1 && echo "  ✓ yt-dlp installed" || echo "  ! yt-dlp not found — YouTube embed will be used as fallback"
+else
+  echo "  ✓ yt-dlp already installed"
+fi
+
+# Set executable permissions
+chmod +x /usr/bin/stremohub
+chmod +x /usr/lib/stremohub/stremohub-gtk.py 2>/dev/null || \
+chmod +x /usr/lib/stremohub/stremohub-gtk.py 2>/dev/null || true
+chmod +x /usr/lib/stremohub/server/stremohub_server.py
+chmod +x /usr/lib/stremohub/server/init_db.py
+
+# Run init_db as the calling user (not root) so DB lands in ~/.local/share/stremohub
+# If SUDO_USER is set (dpkg -i was run with sudo), init as that user
+if [ -n "$SUDO_USER" ]; then
+    su -l "$SUDO_USER" -c "python3 /usr/lib/stremohub/server/init_db.py" \
+        && echo "  ✓ Database initialised for $SUDO_USER" \
+        || echo "  ! DB init will complete on first run"
+else
+    python3 /usr/lib/stremohub/server/init_db.py \
+        && echo "  ✓ Database ready" \
+        || echo "  ! DB init will complete on first run"
+fi
+
+# Systemd
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl daemon-reload 2>/dev/null || true
+    systemctl enable stremohub.service 2>/dev/null || true
+fi
+
+# Desktop database
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database -q /usr/share/applications 2>/dev/null || true
+fi
+
+echo ""
+echo "╔══════════════════════════════════════════════════╗"
+echo "║  StremoHub v3 installed! ✓                        ║"
+echo "║                                                    ║"
+echo "║  Run: stremohub                                    ║"
+echo "║  SmartTube + Pikashow + PVR — all ready          ║"
+echo "╚══════════════════════════════════════════════════╝"
+exit 0

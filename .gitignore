@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Secrets - NEVER commit these
+config.json
+.env
+*.key
+*.secret
+*.pem
+*_secret*
+*credentials*
+client_secret*.json
+google-credentials.json
+
+# Runtime data
+*.db
+*.sqlite
+*.log
+logs/
+
+# Build output
+dist/
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+*.apk
+*.exe
+*.app
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db

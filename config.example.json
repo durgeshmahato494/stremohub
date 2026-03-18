@@ -1,0 +1,14 @@
+{
+  "youtube": {
+    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+    "client_secret": "YOUR_GOOGLE_CLIENT_SECRET",
+    "api_key": ""
+  },
+  "streamvault": {
+    "tmdb_api_key": "YOUR_TMDB_API_KEY"
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8765
+  }
+}
