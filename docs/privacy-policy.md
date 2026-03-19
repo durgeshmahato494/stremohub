@@ -35,4 +35,4 @@ The access token is stored locally and used only to fetch your
 subscriptions, watch history, and liked videos.
 
 ## Contact
-Open an issue at https://github.com/YOUR_USERNAME/stremohub/issues
+Open an issue at https://github.com/durgeshmahato494/stremohub/issues
