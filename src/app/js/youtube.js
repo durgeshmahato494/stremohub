@@ -89,8 +89,6 @@ async function ytShowHist() {
     let rows = `<div style="display:flex;justify-content:space-between;align-items:center;
       padding:8px 12px 6px;border-bottom:1px solid #2a2a2a;flex-shrink:0">
       <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.3px">Recent</span>
-      <button onclick="ytClearHist()"
-        style="background:none;border:none;color:#e50914;font-size:11px;cursor:pointer">Clear all</button>
     </div>`;
     for (const item of items) {
       const q  = item.query || '';
@@ -268,10 +266,8 @@ async function ytHome(){
   let html = '';
 
   if (histItems.length) {
-    html += `<div class="yt-hist-section-header">
+    html += `<div class="yt-hist-section-header" style="display:flex;align-items:center;padding:8px 12px">
       <span style="font-size:14px;font-weight:700">🕐 Based on your searches</span>
-      <button onclick="ytClearHist();ytHome()" 
-        style="background:none;border:none;color:var(--t3);font-size:11px;cursor:pointer">Clear history</button>
     </div>`;
 
     // Load results for each query in parallel (max 10 queries)
@@ -303,16 +299,35 @@ async function ytHome(){
     return;
   }
   rows.innerHTML = html;
+
+  // Auto-focus first video if on YouTube tab and focus is on sidebar/rail
+  const active = document.activeElement;
+  if (!active || active === document.body || active.closest('#sidebar') || active.closest('.yt-rail')) {
+    if (window.irFocusFirst) {
+      setTimeout(() => window.irFocusFirst(rows), 200);
+    }
+  }
 }
 
 function _row(title, items, searchQuery) {
   if (!items.length) return '';
-  const seeMore = searchQuery
-    ? `<button class="btn-link" onclick="document.getElementById('yt-q').value=${JSON.stringify(searchQuery)};ytSearch()" tabindex="0">See all</button>`
-    : '';
+  let scrollHtml = items.slice(0,10).map(v => `<div style="flex-shrink:0;width:270px">${ytCard(v)}</div>`).join('');
+  
+  if (searchQuery) {
+    const safeQ = esc(searchQuery).replace(/'/g, "\\'");
+    scrollHtml += `<div style="flex-shrink:0;width:160px;display:flex">
+      <div class="vcard" tabindex="0" 
+        onclick="document.getElementById('yt-q').value='${safeQ}';ytSearch()" 
+        onkeydown="if(event.key==='Enter')this.click()" 
+        style="flex:1;display:flex;align-items:center;justify-content:center;background:var(--bg3);border:1px solid var(--bdr)">
+        <span style="font-size:14px;font-weight:700">See all ➔</span>
+      </div>
+    </div>`;
+  }
+
   return `<div class="yt-row">
-    <div class="yt-row-hdr"><span>${title}</span>${seeMore}</div>
-    <div class="yt-scroll">${items.slice(0,10).map(v=>`<div style="flex-shrink:0;width:270px">${ytCard(v)}</div>`).join('')}</div>
+    <div class="yt-row-hdr"><span>${title}</span></div>
+    <div class="yt-scroll">${scrollHtml}</div>
   </div>`;
 }
 
@@ -329,6 +344,7 @@ async function ytSearch(){
   POST('/youtube/search/history/add',{query:q});
   const d=await GET(`/youtube/search?q=${encodeURIComponent(q)}&maxResults=24`);
   grid.innerHTML=(d.items||[]).map(ytCard).join('')||'<div class="empty"><div class="ico">🔍</div><h3>No results</h3></div>';
+  if (window.irFocusFirst) window.irFocusFirst(grid);
 }
 
 /* ═══ VIDEO CARD ══════════════════════════════════════════════ */
@@ -409,6 +425,11 @@ async function ytWatch(videoId,title,channel,thumb){
   window._ytRelAll   = rel.items||[];
   window._ytRelShown = 0;
   _ytRenderRel(true);
+  
+  // Explicitly focus watch page elements
+  if (window.irFocusFirst) {
+    setTimeout(() => window.irFocusFirst(document.getElementById('yt-act')), 200);
+  }
 }
 
 /* ─── Related videos (10 + Load More) ───────────────────────── */
@@ -522,8 +543,10 @@ function ytPage(name){
 }
 async function _ytGrid(url,id,mapper){
   const d=await GET(url);
-  document.getElementById(id).innerHTML=(d.items||[]).map(mapper).join('')||
+  const el = document.getElementById(id);
+  el.innerHTML=(d.items||[]).map(mapper).join('')||
     '<div class="empty"><div class="ico">📭</div><h3>Nothing here yet</h3></div>';
+  if (window.irFocusFirst) window.irFocusFirst(el);
 }
 async function _ytSubs(){
   if(!_ytLoggedIn){

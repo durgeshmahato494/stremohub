@@ -25,59 +25,17 @@ async function pvrInit() {
   await _pvrAutoIndia();
   _pvrBindColumnKeys();
   setTimeout(_pvrWireSearch, 200);
+
+  // Hourly auto-refresh
+  setInterval(() => {
+    if (_pvrPlId) pvrRefresh(_pvrPlId);
+  }, 3600000); // 3,600,000 ms = 1 hour
 }
 
 /* ─── KEYBOARD COLUMN NAVIGATION ──────────────────────────── */
 function _pvrBindColumnKeys() {
-  // Left/Right arrow switches focus between Groups → Channels → Player
-  const COLS = ['pvr-group-list','pvr-ch-list','shp-wrap'];
-  let _colIdx = 1; // start on channels
-
-  document.addEventListener('keydown', e => {
-    const active = document.activeElement;
-
-    // Left arrow: move to previous column
-    if (e.key === 'ArrowLeft' && !active.classList.contains('shp-seek') && !active.classList.contains('shp-vol')) {
-      if (_colIdx > 0) {
-        _colIdx--;
-        _focusFirstIn(COLS[_colIdx]);
-        e.preventDefault();
-      }
-      return;
-    }
-
-    // Right arrow: move to next column (when in group/channel lists)
-    if (e.key === 'ArrowRight') {
-      const inGroup   = active.closest('#pvr-group-list');
-      const inChannel = active.closest('#pvr-ch-list');
-      if (inGroup || inChannel) {
-        _colIdx = inGroup ? 1 : 2;
-        const wrap = document.getElementById('shp-wrap');
-        if (wrap) { wrap.focus(); e.preventDefault(); }
-        return;
-      }
-    }
-
-    // Enter to select in group/channel lists (arrows handled by remote.js)
-    if (active.closest('#pvr-group-list') || active.closest('#pvr-ch-list')) {
-      if (e.key === 'Enter') { e.preventDefault(); active.click(); }
-      return;
-    }
-  });
-
-  // Make group/channel items focusable
+  // Make channel items focusable
   _makeFocusable();
-}
-
-function _makeFocusable() {
-  // Watch for new items being rendered and make them keyboard-focusable
-  const obs = new MutationObserver(() => {
-    document.querySelectorAll('.gitem, .chitem').forEach(el => {
-      if (!el.getAttribute('tabindex')) el.setAttribute('tabindex','0');
-    });
-  });
-  obs.observe(document.getElementById('pvr-group-list'), {childList:true,subtree:true});
-  obs.observe(document.getElementById('pvr-ch-list'),    {childList:true,subtree:true});
 }
 
 function _focusFirstIn(containerId) {
@@ -151,47 +109,18 @@ async function pvrLoadPlaylists() {
 async function pvrSelectPlaylist() {
   const plId = document.getElementById('pvr-pl').value;
   if (!plId) {
-    document.getElementById('pvr-group-list').innerHTML = '';
     document.getElementById('pvr-ch-list').innerHTML = '';
     return;
   }
   _pvrPlId = plId; _pvrGroup = 'all';
-
-  const d      = await GET(`/iptv/groups?playlist_id=${plId}`);
-  const groups = d.groups || [];
-  const total  = groups.reduce((a,g) => a+(g.count||0), 0);
-
-  document.getElementById('pvr-group-list').innerHTML =
-    `<div class="gitem on" onclick="pvrGroup('all',this)">
-       <span>📺 All</span><span class="gcnt">${total}</span>
-     </div>
-     <div class="gitem" onclick="pvrGroup('__fav__',this)">
-       <span>❤️ Favorites</span>
-     </div>` +
-    groups.map(g =>
-      `<div class="gitem" onclick="pvrGroup(${JSON.stringify(g.group_title)},this)">
-         <span>${esc(g.group_title||'Uncategorized')}</span>
-         <span class="gcnt">${g.count||0}</span>
-       </div>`
-    ).join('');
-
-  pvrLoadChannels('all');
+  pvrLoadChannels();
 }
 
 /* ─── GROUPS / CHANNELS ─────────────────────────────────────── */
-function pvrGroup(group, el) {
-  document.querySelectorAll('#pvr-group-list .gitem').forEach(g => g.classList.remove('on'));
-  el.classList.add('on'); _pvrGroup = group;
-  if (group === '__fav__') _pvrLoadFavs();
-  else pvrLoadChannels(group);
-}
-
-async function pvrLoadChannels(group) {
+async function pvrLoadChannels() {
   const list = document.getElementById('pvr-ch-list');
   list.innerHTML = '<div style="padding:24px;text-align:center"><div class="spin"></div></div>';
-  const url = group === 'all'
-    ? `/iptv/channels?playlist_id=${_pvrPlId}`
-    : `/iptv/channels?playlist_id=${_pvrPlId}&group=${encodeURIComponent(group)}`;
+  const url = `/iptv/channels?playlist_id=${_pvrPlId}`;
   const d = await GET(url);
   _renderCh(d.channels || []);
 }
@@ -215,11 +144,16 @@ function _renderCh(channels) {
                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
         : ''}
       <div class="ch-logo-ph" style="${ch.logo?'display:none':''}">📺</div>
-      <div style="min-width:0">
-        <div class="ch-name">${esc(ch.name||'')}</div>
-        <div class="ch-group">${esc(ch.group_title||'')}</div>
       </div>
     </div>`).join('');
+
+  // Auto-focus first channel if on PVR tab and focus is on sidebar
+  const active = document.activeElement;
+  if (!active || active === document.body || active.closest('#sidebar')) {
+    if (window.irFocusFirst) {
+      setTimeout(() => window.irFocusFirst(list), 100);
+    }
+  }
 }
 
 /* ─── SEARCH ────────────────────────────────────────────────── */
@@ -227,8 +161,7 @@ let _pvrST;
 function pvrSearch() {
   const q = document.getElementById('pvr-q').value.trim();
   clearTimeout(_pvrST);
-  pvrCloseHist();
-  if (!q) { pvrLoadChannels(_pvrGroup); return; }
+  if (!q) { pvrLoadChannels(); return; }
   if (!_pvrPlId) return;
   _pvrST = setTimeout(async () => {
     const d = await GET(`/iptv/search?playlist_id=${_pvrPlId}&q=${encodeURIComponent(q)}`);
@@ -236,90 +169,13 @@ function pvrSearch() {
   }, 300);
 }
 
-/* ─── PVR Search History ─────────────────────────────────────── */
-async function pvrShowHist() {
-  if (window._oskVisible) return;
-  pvrCloseHist();
-
-  const d     = await GET('/pvr/search/history');
-  const items = d.items || [];
-
-  const box = document.createElement('div');
-  box.id = 'pvr-sh';
-
-  const sb   = document.getElementById('pvr-search-box');
-  if (!sb) return;
-  const rect = sb.getBoundingClientRect();
-
-  Object.assign(box.style, {
-    position:'fixed',
-    top: (rect.bottom + 4) + 'px',
-    left: rect.left + 'px',
-    width: Math.max(rect.width, 220) + 'px',
-    zIndex:'6000',
-    background:'#1e1e1e', border:'1px solid #333',
-    borderRadius:'10px', boxShadow:'0 8px 28px rgba(0,0,0,.8)',
-    overflow:'hidden', maxHeight:'280px', overflowY:'auto',
-    fontFamily:'system-ui,sans-serif',
-  });
-
-  if (!items.length) {
-    box.innerHTML = `<div style="padding:12px;text-align:center;color:#666;font-size:12px">No recent channel searches</div>`;
-  } else {
-    let rows = `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px 5px;border-bottom:1px solid #2a2a2a">
-      <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase">Recent</span>
-      <button onclick="pvrClearHist()" style="background:none;border:none;color:#e50914;font-size:11px;cursor:pointer">Clear</button>
-    </div>`;
-    for (const item of items) {
-      const q = item.query || '';
-      rows += `<div class="hist-item" data-q="${esc(q).replace(/"/g,'&quot;')}" onclick="pvrHistPick(this.dataset.q)"
-        style="display:flex;align-items:center;gap:9px;padding:8px 10px;cursor:pointer;border-bottom:1px solid #181818"
-        onmouseover="this.style.background='#272727'" onmouseout="this.style.background=''">
-        <span style="color:#555;font-size:12px;flex-shrink:0">🕐</span>
-        <span style="flex:1;font-size:12px;color:#f1f1f1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(q)}</span>
-        <button onclick="event.stopPropagation();pvrDelHist(${JSON.stringify(q)},this.parentElement)"
-          style="background:none;border:none;color:#555;cursor:pointer;font-size:12px;padding:0 4px"
-          onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#555'">✕</button>
-      </div>`;
-    }
-    box.innerHTML = rows;
-  }
-
-  document.body.appendChild(box);
-
-  setTimeout(() => {
-    const close = (e) => {
-      const sh = document.getElementById('pvr-sh');
-      if (!sh) { document.removeEventListener('click', close); return; }
-      if (!sh.contains(e.target) && e.target.id !== 'pvr-q') {
-        pvrCloseHist(); document.removeEventListener('click', close);
-      }
-    };
-    document.addEventListener('click', close);
-  }, 0);
-}
-
-function pvrHistPick(q) {
-  const input = document.getElementById('pvr-q');
-  if (!q || !input) return;
-  input.value = q;
-  pvrCloseHist();
-  pvrSearch();
-}
-
-function pvrCloseHist() { document.getElementById('pvr-sh')?.remove(); }
-async function pvrClearHist() { await POST('/pvr/search/history/delete',{}); pvrCloseHist(); toast('History cleared'); }
-async function pvrDelHist(q, row) { await POST('/pvr/search/history/delete',{query:q}); row?.remove(); }
+/* ─── PVR Search History removed ─────────────────────────────── */
 
 function _pvrWireSearch() {
   const input = document.getElementById('pvr-q');
   if (!input || input._w) return;
   input._w = true;
-  input.addEventListener('focus', () => { if (!window._oskVisible) pvrShowHist(); });
-  input.addEventListener('input', () => {
-    if (!input.value.trim()) { if (!window._oskVisible) pvrShowHist(); }
-    else pvrCloseHist();
-  });
+  // Search history removed from PVR section
 }
 
 /* ─── PLAY ──────────────────────────────────────────────────── */
@@ -332,8 +188,7 @@ function pvrPlay(ch) {
   if (el) { el.classList.add('on'); el.scrollIntoView({behavior:'smooth',block:'nearest'}); }
 
   document.getElementById('pvr-now').innerHTML = `
-    <div class="ch-n">${esc(name)}</div>
-    <div class="ch-g">${esc(group)}</div>`;
+    <div class="ch-n">${esc(name)}</div>`;
 
   _pvrStreamSmart(url, name);
 }
@@ -434,7 +289,6 @@ async function pvrDelete(plId, name) {
   toast('Deleted');
   _pvrPlId = null;
   await pvrLoadPlaylists();
-  document.getElementById('pvr-group-list').innerHTML = '';
   document.getElementById('pvr-ch-list').innerHTML = '';
 }
 

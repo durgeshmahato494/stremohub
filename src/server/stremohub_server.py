@@ -20,7 +20,8 @@ _data = os.environ.get("STREMOHUB_DATA", os.path.join(_home, ".local", "share", 
 
 CONFIG_PATH = os.path.join(_data, "config.json")
 DB_PATH     = os.path.join(_data, "db", "stremohub.db")
-APP_DIR     = Path("/usr/lib/stremohub/app")
+_script_dir = Path(__file__).parent.parent.absolute()
+APP_DIR     = _script_dir / "app"
 
 # ── Built-in API keys (zero config) ───────────────────────────────────────────
 # TMDB public read-access token (free tier — works for all metadata)
@@ -1366,9 +1367,9 @@ class Handler(BaseHTTPRequestHandler):
         if path=="/iptv/channels":
             pl_id=p("playlist_id"); group=p("group"); db=get_db()
             if group and group!="all":
-                rows=db.execute("SELECT * FROM iptv_channels WHERE playlist_id=? AND group_title=? ORDER BY name",(pl_id,group)).fetchall()
+                rows=db.execute("SELECT * FROM iptv_channels WHERE playlist_id=? AND group_title=? ORDER BY name ASC",(pl_id,group)).fetchall()
             else:
-                rows=db.execute("SELECT * FROM iptv_channels WHERE playlist_id=? ORDER BY group_title,name",(pl_id,)).fetchall()
+                rows=db.execute("SELECT * FROM iptv_channels WHERE playlist_id=? ORDER BY name ASC",(pl_id,)).fetchall()
             db.close(); self.jsend({"channels":[dict(r) for r in rows]}); return
 
         if path=="/iptv/groups":
@@ -1378,7 +1379,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if path=="/iptv/search":
             pl_id=p("playlist_id"); q=f"%{p('q')}%"; db=get_db()
-            rows=db.execute("SELECT * FROM iptv_channels WHERE playlist_id=? AND name LIKE ? ORDER BY name LIMIT 100",(pl_id,q)).fetchall()
+            rows=db.execute("SELECT * FROM iptv_channels WHERE playlist_id=? AND name LIKE ? ORDER BY name DESC LIMIT 100",(pl_id,q)).fetchall()
             db.close(); self.jsend({"channels":[dict(r) for r in rows]}); return
 
         if path=="/iptv/favorites":

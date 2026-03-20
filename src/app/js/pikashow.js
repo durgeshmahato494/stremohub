@@ -145,6 +145,15 @@ async function pikaHome(){
     _pikaRow('📺 Popular Series',        series.results||[],    'tv',    'poster') +
     _pikaRow('⭐ Top Rated',             topRated.results||[],  'movie', 'poster') +
     _pikaRow('🌸 Anime',                 anime.results||[],     'tv',    'poster');
+
+  // Auto-focus Hero "Watch Now" button if on Pikashow tab and focus is on sidebar/rail
+  const active = document.activeElement;
+  if (!active || active === document.body || active.closest('#sidebar') || active.closest('.pika-rail')) {
+    const heroBtn = document.querySelector('#pika-hero .btn-pri');
+    if (heroBtn) {
+      setTimeout(() => window.irFocus?.(heroBtn), 150);
+    }
+  }
 }
 
 function _pikaLang(){ return document.getElementById('pika-lang')?.value||''; }
@@ -429,6 +438,9 @@ async function _fpOpen(id, mt, s, ep){
   // Start streaming — try built-in first
   _fpStreamBuiltin();
   POST('/sv/history/update',{content_id:String(id),source_id:0,type:mt,progress:0,duration:0});
+  
+  // Focus the player modal topbar or back button
+  if (window.irFocusFirst) window.irFocusFirst(document.getElementById('pika-player'));
 }
 
 /* ── Built-in player: extract direct stream via yt-dlp ─────── */
@@ -625,6 +637,7 @@ function fpClose(){
   player.style.display = 'none';           // override inline style set by _fpOpen
   const iframe = document.getElementById('fp-iframe');
   if(iframe) iframe.src='about:blank';
+  if (window.irFocusFirst) window.irFocusFirst(document.getElementById('pika-detail-page'));
   _fp.hindi=false;
   document.body.style.overflow='';
   const sw=document.getElementById('pp-season-wrap');
@@ -687,7 +700,6 @@ async function pikaShowSearchHist() {
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;
       padding:8px 12px 6px;border-bottom:1px solid #2a2a2a">
       <span style="font-size:11px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px">Recent Searches</span>
-      <button onclick="pikaClearHist()" style="background:none;border:none;color:#e50914;font-size:11px;cursor:pointer;padding:2px 6px">Clear all</button>
     </div>`;
     for (const item of items) {
       const q  = item.query || '';
@@ -755,6 +767,7 @@ function pikaPage(name){
   pikaShowPage(name+'-page');
   if(name==='mylist') _pikaLoadGrid('/sv/favorites','pika-mylist-grid',i=>{const p=i.poster?TMDB_IMG+'w342'+i.poster:'';return`<div class="pcard" onclick="pikaDetail('${i.content_id}','${i.type||'movie'}')">${p?`<img src="${esc(p)}" loading="lazy">`:'<div style="aspect-ratio:2/3;background:var(--bg3);display:flex;align-items:center;justify-content:center">🎬</div>'}<div class="play-ov"><div class="play-circle">▶</div></div><div class="pinfo"><div class="ptitle">${esc(i.title||'')}</div></div></div>`;});
   if(name==='continue') _pikaLoadGrid('/sv/history','pika-continue-grid',i=>{const p=i.poster?TMDB_IMG+'w342'+i.poster:'';return`<div class="pcard" onclick="fpPlay('${i.content_id}','${i.type||'movie'}')">${p?`<img src="${esc(p)}" loading="lazy">`:'<div style="aspect-ratio:2/3;background:var(--bg3);display:flex;align-items:center;justify-content:center">🎬</div>'}<div class="play-ov"><div class="play-circle">▶</div></div><div class="pinfo"><div class="ptitle">${esc(i.title||'')}</div><div class="pyear">Resume ▶</div></div></div>`;});
+  if (window.irFocusFirst) window.irFocusFirst(document.getElementById(`pika-${name}-page`));
 }
 
 // ESC closes player

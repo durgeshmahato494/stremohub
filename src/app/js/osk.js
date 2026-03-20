@@ -16,6 +16,18 @@ let _oskTarget  = null;
 let _oskShift   = false;
 let _oskRow     = 4;
 let _oskCol     = 0;
+
+// ── OSK enabled / disabled pref (persisted in localStorage) ──
+let _oskEnabled = localStorage.getItem('osk_enabled') !== 'false'; // default ON
+
+/** Called by the Settings toggle checkbox */
+window.setOskEnabled = function(val) {
+  _oskEnabled = !!val;
+  localStorage.setItem('osk_enabled', _oskEnabled ? 'true' : 'false');
+  // If OSK is currently open and we're turning it off, close it
+  if (!_oskEnabled && window._oskVisible) oskHide();
+};
+
 // Expose as window property so remote.js can check it
 Object.defineProperty(window, '_oskVisible', {
   get: () => !!document.getElementById('osk-panel')?.classList.contains('osk-visible'),
@@ -70,6 +82,7 @@ function _renderKeys() {
 /* ── Show / Hide ────────────────────────────────────────────── */
 window.oskShow = function(input) {
   if (!input) return;
+  if (!_oskEnabled) return; // ← honour the toggle
   _buildOsk();
   _oskTarget = input;
   document.getElementById('osk-panel').classList.add('osk-visible');
@@ -216,3 +229,14 @@ function _wireAll() {
 _wireAll();
 setTimeout(_wireAll, 500);
 setTimeout(_wireAll, 1500);
+
+// ── Sync Settings checkbox to saved pref on load ──────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const cb = document.getElementById('osk-enabled-toggle');
+  if (cb) cb.checked = _oskEnabled;
+});
+// Also handle late tab switches (settings tab lazy-rendered)
+document.addEventListener('click', () => {
+  const cb = document.getElementById('osk-enabled-toggle');
+  if (cb && cb._oskSynced !== true) { cb.checked = _oskEnabled; cb._oskSynced = true; }
+});

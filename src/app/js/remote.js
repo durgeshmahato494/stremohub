@@ -14,16 +14,29 @@ const FOCUSABLE = [
   'input:not([disabled]):not([tabindex="-1"])',
   'select:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',
-  '.vcard','.pcard','.wcard',
+  '.vcard','.pcard','.wcard','.vcompact',
   '.chitem','.gitem',
   '.pill','.pp-src-btn',
   '.ep-btn','.pp-season-btn','.pp-ep-btn',
   '.osk-key',
   '.yt-load-more',
   '.sidenav li',
+  'details summary',
+  '.btn-pri','.btn-sec',
+  '.stab','.yt-hist-del','.btn-link','.yt-avatar-row',
 ].join(',');
 
 let _irActive = false;
+
+function irBegin() {
+  if (_irActive) return;
+  _irActive = true;
+  document.body.classList.add('ir-active');
+  const all = _getFocusable();
+  if (all.length && (!document.activeElement || document.activeElement === document.body)) {
+    _irFocus(all[0]);
+  }
+}
 
 /* ── Focus helpers ──────────────────────────────────────────── */
 function _visible(el) {
@@ -43,7 +56,7 @@ function _irFocus(el) {
   if (!el) return;
   document.querySelectorAll('.ir-focused').forEach(e => e.classList.remove('ir-focused'));
   el.classList.add('ir-focused');
-  el.scrollIntoView({behavior:'smooth', block:'nearest', inline:'nearest'});
+  el.scrollIntoView({behavior:'smooth', block:'center', inline:'center'});
   el.focus?.();
 }
 
@@ -53,8 +66,9 @@ function _navDir(dir) {
   const all    = _getFocusable();
 
   if (!all.length) return;
+  const activeCol = _getColRoot(active);
 
-  // If nothing focused, start at first element
+  // If nothing focused yet, start at the first element
   if (!active || active === document.body || !all.includes(active)) {
     _irFocus(all[0]);
     return;
@@ -68,26 +82,133 @@ function _navDir(dir) {
 
   for (const el of all) {
     if (el === active) continue;
+
+    // Strict vertical lock: if moving up/down, stay in same column
+    if (dir === 'up' || dir === 'down') {
+      if (_getColRoot(el) !== activeCol) continue;
+    }
     const er = el.getBoundingClientRect();
     const ex = er.left + er.width  / 2;
     const ey = er.top  + er.height / 2;
-    const dx = ex - ax, dy = ey - ay;
+    const dx = ex - ax;
+    const dy = ey - ay;
 
-    // Must be in the correct direction
-    const ok =
-      (dir === 'right' && dx >  5) ||
-      (dir === 'left'  && dx < -5) ||
-      (dir === 'down'  && dy >  5) ||
-      (dir === 'up'    && dy < -5);
-    if (!ok) continue;
+    // Primary / secondary axis distances
+    const primary   = (dir === 'left' || dir === 'right') ? Math.abs(dx) : Math.abs(dy);
+    const secondary = (dir === 'left' || dir === 'right') ? Math.abs(dy) : Math.abs(dx);
 
-    const primary   = (dir==='left'||dir==='right') ? Math.abs(dx) : Math.abs(dy);
-    const secondary = (dir==='left'||dir==='right') ? Math.abs(dy) : Math.abs(dx);
-    const score     = primary + secondary * 3;
+    // ── Strict directional gate ──────────────────────────────
+    // 1. Must be clearly in the pressed direction (min 4px clearance)
+    const clearance = 4;
+    const inDir =
+      (dir === 'right' && dx >  clearance) ||
+      (dir === 'left'  && dx < -clearance) ||
+      (dir === 'down'  && dy >  clearance) ||
+      (dir === 'up'    && dy < -clearance);
+    if (!inDir) continue;
+
+    // 2. Must be within a 56° cone (relaxed from strict 45°):
+    //    lateral drift must not exceed 1.5x primary travel distance.
+    if (secondary > primary * 1.5) continue;
+
+    // ── Score: prefer closest in primary axis; penalize lateral drift
+    // secondary * 5 keeps the winner firmly in the target lane.
+    const score = primary + secondary * 5;
     if (score < bestScore) { bestScore = score; best = el; }
   }
 
-  if (best) _irFocus(best);
+  // Try explicit jumpers
+  if (_navRails(dir)) return true;
+  if (_navPVRCols(dir)) return true;
+  if (dir === 'left' || dir === 'right') {
+    if (_navSidebar(dir)) return true;
+  }
+
+  if (best) {
+    _irFocus(best);
+    return true;
+  }
+  return false;
+}
+
+function _getColRoot(el) {
+  if (!el) return null;
+  const inPVR = el.closest('#tab-pvr');
+  if (inPVR) {
+    if (el.closest('#shp-wrap')) return 'pvr-player';
+    return 'pvr-list-area'; // Groups search + channel list
+  }
+  return el.closest('.yt-rail') || 
+         el.closest('.pika-rail') ||
+         el.closest('#sidebar') ||
+         el.closest('.tab-main') || 
+         el.closest('.tab.active');
+}
+
+function _navPVRCols(dir) {
+  const active = document.activeElement;
+  const tab    = document.querySelector('.tab.active');
+  if (tab?.id !== 'tab-pvr') return false;
+
+  const inCh = active.closest('#pvr-ch-list');
+  const inPl = active.closest('#shp-wrap');
+
+  if (dir === 'right' && inCh) {
+    const wrap = document.getElementById('shp-wrap');
+    if (wrap) { _irFocus(wrap); return true; }
+  }
+  if (dir === 'left' && inPl) {
+    const list = document.getElementById('pvr-ch-list');
+    const first = _getFocusable(list)[0];
+    if (first) { _irFocus(first); return true; }
+  }
+  // Up/Down from search box to channels
+  const inSearch = active.id === 'pvr-q';
+  if (dir === 'down' && inSearch) {
+    const list = document.getElementById('pvr-ch-list');
+    const first = _getFocusable(list)[0];
+    if (first) { _irFocus(first); return true; }
+  }
+  if (dir === 'up' && inCh) {
+    const q = document.getElementById('pvr-q');
+    if (q) { _irFocus(q); return true; }
+  }
+  return false;
+}
+
+function _navRails(dir) {
+  const active = document.activeElement;
+  const inYtR = active.closest('.yt-rail');
+  const inPkR = active.closest('.pika-rail');
+
+  const tab   = document.querySelector('.tab.active');
+  const rail  = tab?.querySelector('.yt-rail, .pika-rail');
+
+  if (dir === 'right' && (inYtR || inPkR)) {
+    // Jump from rail to main content
+    const main = tab?.querySelector('.tab-main');
+    const first = _getFocusable(main)[0];
+    if (first) { _irFocus(first); return true; }
+  }
+  if (dir === 'left' && !inYtR && !inPkR && !active.closest('#sidebar')) {
+    // Jump from content to local rail (if it exists)
+    if (rail) {
+      const first = _getFocusable(rail)[0];
+      if (first) { _irFocus(first); return true; }
+    }
+  }
+
+  // Explicit vertical navigation within rails
+  if ((dir === 'up' || dir === 'down') && (inYtR || inPkR)) {
+    const r = inYtR || inPkR;
+    const all = _getFocusable(r);
+    const idx = all.indexOf(active);
+    if (dir === 'down' && idx < all.length - 1) { _irFocus(all[idx+1]); return true; }
+    if (dir === 'up' && idx > 0) { _irFocus(all[idx-1]); return true; }
+    return true; // block if at edges
+  }
+
+  return false;
 }
 
 /* ── Sidebar navigation ────────────────────────────────────── */
@@ -133,6 +254,9 @@ function _navHist(dir) {
   const hist   = document.getElementById(histId);
   if (!hist || hist.style.display === 'none') return false;
 
+  // Trap left/right so focus doesn't accidentally move to elements behind the dropdown
+  if (dir === 'left' || dir === 'right') return true;
+
   const items = [...hist.querySelectorAll('.hist-item')];
   if (!items.length) return false;
 
@@ -144,9 +268,20 @@ function _navHist(dir) {
   if (dir === 'down') next = Math.min(idx + 1, items.length - 1);
   if (dir === 'up')   next = idx - 1;
 
-  if (next < 0) return false; // exit back to keyboard/input
+  if (next < 0) {
+    const input = document.getElementById(histId === 'yt-sh' ? 'yt-q' : histId === 'pvr-sh' ? 'pvr-q' : 'pika-q');
+    if (input) _irFocus(input);
+    return true;
+  }
+  
   items[next].classList.add('ir-hist-focus');
-  items[next].scrollIntoView({block:'nearest'});
+  items[next].scrollIntoView({behavior:'smooth', block:'center'});
+
+  // Remove focus from background items to prevent double highlight
+  document.querySelectorAll('.ir-focused').forEach(e => {
+    if (e.tagName !== 'INPUT') e.classList.remove('ir-focused');
+  });
+  
   return true;
 }
 
@@ -209,132 +344,96 @@ function _fullscreen() {
 
 /* ── Main keydown handler ───────────────────────────────────── */
 document.addEventListener('keydown', e => {
-  // If OSK is open, let osk.js handle it (capture phase, higher priority)
   if (window._oskVisible) return;
 
-  // Don't intercept while typing in a real input/textarea
   const tag = document.activeElement?.tagName;
   const isRealInput = (tag === 'INPUT' || tag === 'TEXTAREA') &&
                       !['ArrowUp','ArrowDown','Escape','Enter'].includes(e.key);
   if (isRealInput) return;
 
-  // Activate remote mode on any key
-  if (!_irActive) {
-    _irActive = true;
-    document.body.classList.add('ir-active');
-    if (!document.activeElement || document.activeElement === document.body) {
-      const first = _getFocusable()[0];
-      if (first) _irFocus(first);
-    }
+  // Activation check
+  if (!_irActive && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+    irBegin();
+    _showHint();
   }
+  if (!_irActive) return;
 
   const active = document.activeElement;
-  const isInput = active?.tagName === 'INPUT';
+  const isInput = (active?.tagName === 'INPUT');
 
   switch (e.key) {
-    // ── Navigation ──────────────────────────────────────────
-    case 'ArrowRight':
+    case 'ArrowRight': case 'ArrowLeft': case 'ArrowDown': case 'ArrowUp':
       e.preventDefault();
-      if (_navHist('right')) break;
-      if (_navSidebar('right')) break;
-      _navDir('right');
-      break;
-    case 'ArrowLeft':
-      e.preventDefault();
-      if (_navHist('left')) break;
-      if (_navSidebar('left')) break;
-      _navDir('left');
-      break;
-    case 'ArrowDown':
-      e.preventDefault();
-      // If focused on search input, jump straight to results grid
-      if (active && (active.id === 'yt-q' || active.id === 'pika-q' || active.id === 'pvr-q')) {
-        const tab = document.querySelector('.tab.active');
-        // Try result grids in order
-        const grids = ['yt-search-grid','yt-trending-grid','yt-rows',
-                       'pika-search-grid','pika-rows',
-                       'pvr-ch-list'];
-        let jumped = false;
-        for (const gid of grids) {
-          const g = document.getElementById(gid);
-          if (!g || g.closest('.hidden')) continue;
-          const first = _getFocusable(g)[0];
-          if (first) { _irFocus(first); jumped = true; break; }
-        }
-        if (!jumped) _navDir('down');
-        break;
-      }
-      if (!_navHist('down') && !_navSidebar('down')) _navDir('down');
-      break;
-    case 'ArrowUp':
-      e.preventDefault();
-      if (_navHist('up')) break;
-      if (_navSidebar('up')) break;
-      _navDir('up');
+      const dir = e.key.replace('Arrow','').toLowerCase();
+      if (_navHist(dir)) break;
+      if (_navRails(dir)) break;
+      if (_navPVRCols(dir)) break;
+      if (_navSidebar(dir)) break;
+      _navDir(dir);
       break;
 
-    // ── Select ──────────────────────────────────────────────
-    // ── Select ──────────────────────────────────────────────
     case 'Enter':
       e.preventDefault();
-      if (_selectHist()) break;
+      if (_selectHist && _selectHist()) break;
       if (isInput && (active.id === 'yt-q' || active.id === 'pika-q' || active.id === 'pvr-q')) {
-        oskShow?.(active);
+        if (typeof oskShow === 'function') oskShow(active);
       } else {
         active?.click?.();
       }
       break;
 
-    // ── Back ────────────────────────────────────────────────
     case 'Backspace':
     case 'Escape':
       e.preventDefault();
       _back();
       break;
 
-    // ── Media ────────────────────────────────────────────────
     case ' ':
-      if (!isInput) { e.preventDefault(); _media('play'); }
-      break;
-    case 'MediaPlayPause':
-    case 'MediaPlay':     e.preventDefault(); _media('play');   break;
-    case 'MediaStop':     e.preventDefault(); _media('stop');   break;
-    case 'MediaFastForward': e.preventDefault(); _media('fwd'); break;
-    case 'MediaRewind':      e.preventDefault(); _media('rew'); break;
-    case 'PageUp':        e.preventDefault(); _media('chup');   break;
-    case 'PageDown':      e.preventDefault(); _media('chdown'); break;
-    case 'VolumeUp':      e.preventDefault(); _media('volup');  break;
-    case 'VolumeDown':    e.preventDefault(); _media('voldwn'); break;
-
-    // ── Fullscreen ───────────────────────────────────────────
-    case 'f': case 'F':
-      if (!isInput) { e.preventDefault(); _fullscreen(); }
+      if (!isInput) { e.preventDefault(); _media?.('play'); }
       break;
 
-    // ── Tab switching (blocked when OSK open) ─────────────────
-    case 'F1': if(!window._oskVisible){e.preventDefault();switchTab('youtube',  document.querySelector('[data-tab="youtube"]'));}  break;
-    case 'F2': if(!window._oskVisible){e.preventDefault();switchTab('pikashow', document.querySelector('[data-tab="pikashow"]'));} break;
-    case 'F3': if(!window._oskVisible){e.preventDefault();switchTab('pvr',      document.querySelector('[data-tab="pvr"]'));}      break;
-    case 'F4': if(!window._oskVisible){e.preventDefault();switchTab('settings', document.querySelector('[data-tab="settings"]'));} break;
+    case 'MediaPlayPause': case 'MediaPlay': e.preventDefault(); _media?.('play'); break;
+    case 'MediaStop': e.preventDefault(); _media?.('stop'); break;
+    case 'MediaFastForward': e.preventDefault(); _media?.('fwd'); break;
+    case 'MediaRewind': e.preventDefault(); _media?.('rew'); break;
+    case 'PageUp': e.preventDefault(); _media?.('chup'); break;
+    case 'PageDown': e.preventDefault(); _media?.('chdown'); break;
+    case 'VolumeUp': e.preventDefault(); _media?.('volup'); break;
+    case 'VolumeDown': e.preventDefault(); _media?.('voldwn'); break;
+    case 'f': case 'F': if (!isInput) { e.preventDefault(); _fullscreen?.(); } break;
 
-    // ── Home ──────────────────────────────────────────────────
-    case 'Home':
-    case 'MediaHome':
+    case 'F1': e.preventDefault(); switchTab('youtube',  document.querySelector('[data-tab="youtube"]'));  break;
+    case 'F2': e.preventDefault(); switchTab('pikashow', document.querySelector('[data-tab="pikashow"]')); break;
+    case 'F3': e.preventDefault(); switchTab('pvr',      document.querySelector('[data-tab="pvr"]'));      break;
+    case 'F4': e.preventDefault(); switchTab('settings', document.querySelector('[data-tab="settings"]')); break;
+
+    case 'Home': case 'MediaHome':
       e.preventDefault();
       const t = document.querySelector('.tab.active');
-      if (t?.id==='tab-youtube')  ytHome?.();
-      if (t?.id==='tab-pikashow') pikaHome?.();
+      if (t?.id==='tab-youtube')  window.ytHome?.();
+      if (t?.id==='tab-pikashow') window.pikaHome?.();
       break;
   }
-}, true); // capture — highest priority
+}, true);
+
+/* ── Activation Hint ─────────────────────────────────────────── */
+let _hintShown = false;
+function _showHint() {
+  if (_hintShown) return; _hintShown = true;
+  const h = document.createElement('div');
+  h.className = 'ir-hint';
+  h.innerHTML = '🎮 Remote Active<br>↑↓←→ Navigate · OK Select · F1-F4 Tabs';
+  document.body.appendChild(h);
+  setTimeout(() => h.remove(), 4000);
+}
 
 /* ── Mouse hides remote mode ─────────────────────────────────── */
-document.addEventListener('mousemove', () => {
-  if (_irActive) {
-    _irActive = false;
-    document.body.classList.remove('ir-active');
-    document.querySelectorAll('.ir-focused').forEach(e => e.classList.remove('ir-focused'));
-  }
+document.addEventListener('mousemove', e => {
+  if (!_irActive) return;
+  if (Math.abs(e.movementX || 0) < 5 && Math.abs(e.movementY || 0) < 5) return;
+  _irActive = false;
+  document.body.classList.remove('ir-active');
+  document.querySelectorAll('.ir-focused').forEach(e => e.classList.remove('ir-focused'));
 }, {passive:true});
 
 /* ── Hook switchTab to re-focus after tab switch ─────────────── */
@@ -344,28 +443,52 @@ if (_origSwitch) {
     _origSwitch(name, el);
     setTimeout(() => {
       if (_irActive) {
-        // Skip search inputs — they trigger OSK on focus
-        const all = _getFocusable(document.getElementById('tab-'+name));
-        const first = all.find(e => e.tagName !== 'INPUT' && e.id !== 'pvr-q');
-        if (first) _irFocus(first);
+        const tab = document.getElementById('tab-' + name);
+        if (name === 'youtube') {
+          // Focus first video or home button
+          const first = tab.querySelector('.vcard') || document.getElementById('yt-btn-home');
+          if (first) _irFocus(first);
+        } else if (name === 'pikashow') {
+          // Focus Hero "Watch Now" or first card
+          const first = tab.querySelector('#pika-hero .btn-pri') || tab.querySelector('.pcard') || document.getElementById('pika-btn-home');
+          if (first) _irFocus(first);
+        } else if (name === 'pvr') {
+          // Focus first channel in list
+          const first = tab.querySelector('.chitem');
+          if (first) _irFocus(first);
+          else {
+            // If no channels yet, focus playlist dropdown as fallback
+            const pl = document.getElementById('pvr-pl');
+            if (pl) _irFocus(pl);
+          }
+        } else {
+          const all = _getFocusable(tab);
+          const first = all.find(e => e.tagName !== 'INPUT' && e.id !== 'pvr-q');
+          if (first) _irFocus(first);
+        }
       }
     }, 250);
   };
 }
 
+/* ── Global helper for transitioning view focus ─────────────── */
+window.irFocusFirst = function(containerEl) {
+  if (!_irActive || !containerEl) return;
+  setTimeout(() => {
+    // Only focus if the active element is not already inside the container
+    if (!containerEl.contains(document.activeElement)) {
+      const all = _getFocusable(containerEl);
+      // Skip input elements by default so OSK doesn't pop up wildly
+      let first = all.find(e => e.tagName !== 'INPUT');
+      if (!first && all.length) first = all[0];
+      if (first) _irFocus(first);
+    }
+  }, 100);
+};
+
 // OSK wiring is handled entirely by osk.js
 
-/* ── First keypress hint ─────────────────────────────────────── */
-let _hintShown = false;
-document.addEventListener('keydown', () => {
-  if (_hintShown) return; _hintShown = true;
-  if (!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)) return;
-  const h = document.createElement('div');
-  h.className = 'ir-hint';
-  h.innerHTML = '🎮 Remote Active<br>↑↓←→ Navigate · OK Select<br>⌫ Back · F1-F4 Tabs<br>On input: Enter = Keyboard';
-  document.body.appendChild(h);
-  setTimeout(() => h.remove(), 4000);
-}, {once:true});
+// Extra listeners removed.
 
 /* ── IR focus CSS (applied to body.ir-active) ────────────────── */
 // Dynamic CSS injection for search history item focus

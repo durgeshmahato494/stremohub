@@ -27,245 +27,249 @@
 <main id="content">
 
 <!-- ══════════════ YOUTUBE (SmartTube style) ══════════════════ -->
-<div id="tab-youtube" class="tab active">
-  <div class="topbar">
-    <div class="search-box" id="yt-search-box">
-      <div class="search-box-inner">
-        <input id="yt-q" placeholder="Search YouTube…" onkeydown="if(event.key==='Enter')ytSearch()" autocomplete="off"/>
-        <button onclick="ytSearch()">🔍</button>
-      </div>
-      <!-- history dropdown injected here by JS -->
-    </div>
-    <div class="topbar-right">
-      <select id="yt-region" onchange="ytHome()">
-        <option value="IN">🇮🇳 India</option><option value="US">🇺🇸 US</option>
-        <option value="GB">🇬🇧 UK</option><option value="JP">🇯🇵 Japan</option>
-        <option value="KR">🇰🇷 Korea</option><option value="DE">🇩🇪 Germany</option>
-        <option value="BR">🇧🇷 Brazil</option><option value="AU">🇦🇺 Australia</option>
-      </select>
-      <div id="yt-login-area"></div>
-    </div>
-  </div>
-
-  <!-- SmartTube category pills -->
-  <div class="category-row" id="yt-cats"></div>
-
-  <!-- Pages -->
-  <div id="yt-home" class="yt-page">
-    <div id="yt-rows"></div>
-  </div>
-  <div id="yt-search-page" class="yt-page hidden">
-    <div class="page-title">🔍 <span id="yt-sq"></span></div>
-    <div id="yt-search-grid" class="vgrid"></div>
-  </div>
-  <div id="yt-watch-page" class="yt-page hidden">
-    <div class="watch-layout">
-      <div class="watch-main">
-        <!-- SHPlayer container — built-in player with quality selection -->
-        <div class="player-box" id="yt-player-container"
-             style="position:relative;aspect-ratio:16/9;background:#000;border-radius:var(--r);overflow:hidden">
-          <!-- player.js injects the SHPlayer here -->
-        </div>
-        <div id="yt-info"></div>
-      </div>
-      <div class="watch-side">
-        <div class="section-label">Up Next</div>
-        <div id="yt-related"></div>
-      </div>
-    </div>
-  </div>
-  <div id="yt-channel-page" class="yt-page hidden">
-    <div id="yt-ch-header"></div>
-    <div id="yt-ch-videos" class="vgrid"></div>
-  </div>
-  <div id="yt-history-page" class="yt-page hidden">
-    <div class="page-title">📜 Watch History</div>
-    <div id="yt-history-grid" class="vgrid"></div>
-  </div>
-  <div id="yt-subs-page" class="yt-page hidden">
-    <div class="page-title">🔔 Subscriptions</div>
-    <div id="yt-subs-grid" class="vgrid"></div>
-  </div>
-  <div id="yt-likes-page" class="yt-page hidden">
-    <div class="page-title">👍 Liked Videos</div>
-    <div id="yt-likes-grid" class="vgrid"></div>
-  </div>
-
+<div id="tab-youtube" class="tab active row-layout">
   <!-- SmartTube left rail -->
   <div class="yt-rail">
-    <button onclick="ytHome()">🏠</button>
-    <button onclick="ytPage('history')">📜</button>
-    <button onclick="ytPage('subs')">🔔</button>
-    <button onclick="ytPage('likes')">👍</button>
+    <button id="yt-btn-home" onclick="ytHome()" title="Home">🏠</button>
+    <button id="yt-btn-hist" onclick="ytPage('history')" title="History">📜</button>
+    <button id="yt-btn-subs" onclick="ytPage('subs')" title="Subscriptions">🔔</button>
+    <button id="yt-btn-likes" onclick="ytPage('likes')" title="Liked Videos">👍</button>
+  </div>
+
+  <div class="tab-main">
+    <div class="topbar">
+      <div class="search-box" id="yt-search-box">
+        <div class="search-box-inner">
+          <input id="yt-q" placeholder="Search YouTube…" onkeydown="if(event.key==='Enter')ytSearch()" autocomplete="off"/>
+          <button onclick="ytSearch()">🔍</button>
+        </div>
+        <!-- history dropdown injected here by JS -->
+      </div>
+      <div class="topbar-right">
+        <select id="yt-region" onchange="ytHome()">
+          <option value="IN">🇮🇳 India</option><option value="US">🇺🇸 US</option>
+          <option value="GB">🇬🇧 UK</option><option value="JP">🇯🇵 Japan</option>
+          <option value="KR">🇰🇷 Korea</option><option value="DE">🇩🇪 Germany</option>
+          <option value="BR">🇧🇷 Brazil</option><option value="AU">🇦🇺 Australia</option>
+        </select>
+        <div id="yt-login-area"></div>
+      </div>
+    </div>
+
+    <!-- SmartTube category pills -->
+    <div class="category-row" id="yt-cats"></div>
+
+    <!-- Pages -->
+    <div id="yt-home" class="yt-page">
+      <div id="yt-rows"></div>
+    </div>
+    <div id="yt-search-page" class="yt-page hidden">
+      <div class="page-title">🔍 <span id="yt-sq"></span></div>
+      <div id="yt-search-grid" class="vgrid"></div>
+    </div>
+    <div id="yt-watch-page" class="yt-page hidden">
+      <div class="watch-layout">
+        <div class="watch-main">
+          <!-- SHPlayer container — built-in player with quality selection -->
+          <div class="player-box" id="yt-player-container"
+               style="position:relative;aspect-ratio:16/9;background:#000;border-radius:var(--r);overflow:hidden">
+            <!-- player.js injects the SHPlayer here -->
+          </div>
+          <div id="yt-info"></div>
+        </div>
+        <div class="watch-side">
+          <div class="section-label">Up Next</div>
+          <div id="yt-related"></div>
+        </div>
+      </div>
+    </div>
+    <div id="yt-channel-page" class="yt-page hidden">
+      <div id="yt-ch-header"></div>
+      <div id="yt-ch-videos" class="vgrid"></div>
+    </div>
+    <div id="yt-history-page" class="yt-page hidden">
+      <div class="page-title">📜 Watch History</div>
+      <div id="yt-history-grid" class="vgrid"></div>
+    </div>
+    <div id="yt-subs-page" class="yt-page hidden">
+      <div class="page-title">🔔 Subscriptions</div>
+      <div id="yt-subs-grid" class="vgrid"></div>
+    </div>
+    <div id="yt-likes-page" class="yt-page hidden">
+      <div class="page-title">👍 Liked Videos</div>
+      <div id="yt-likes-grid" class="vgrid"></div>
+    </div>
   </div>
 </div>
 
 <!-- ══════════════ PIKASHOW (exact clone) ════════════════════ -->
-<div id="tab-pikashow" class="tab hidden">
-  <div class="topbar">
-    <div class="pika-brand">🎬 <b>Pikashow</b></div>
-    <div class="search-box" id="pika-search-box">
-      <div class="search-box-inner">
-        <input id="pika-q" placeholder="Movies, Series, Anime…" onkeydown="if(event.key==='Enter')pikaSearch()" autocomplete="off"/>
-        <button onclick="pikaSearch()">🔍</button>
-      </div>
-      <!-- history dropdown injected here by JS -->
-    </div>
-    <div class="topbar-right">
-      <select id="pika-lang" onchange="pikaHome()" title="Language">
-        <option value="">🌐 All</option>
-        <option value="hi">🇮🇳 Hindi</option><option value="en">🇺🇸 English</option>
-        <option value="ta">Tamil</option><option value="te">Telugu</option>
-        <option value="ml">Malayalam</option><option value="kn">Kannada</option>
-        <option value="bn">Bengali</option><option value="mr">Marathi</option>
-        <option value="pa">Punjabi</option><option value="ko">Korean</option>
-        <option value="ja">Japanese</option><option value="zh">Chinese</option>
-      </select>
-      <select id="pika-src" title="Stream Source">
-        <optgroup label="🇮🇳 Indian (Best for Hindi)">
-          <option value="8stream">8Stream (Hindi/Tamil/Telugu)</option>
-          <option value="vixsrc">VixSrc Indian</option>
-          <option value="cinesrc">CineSrc Indian</option>
-          <option value="multiembed">MultiEmbed Hindi</option>
-          <option value="vidlink">VidLink Hindi</option>
-          <option value="fsapi">FSApi Indian</option>
-          <option value="gdrive">GDrive Player</option>
-        </optgroup>
-        <optgroup label="🌐 Global">
-          <option value="vidsrc">VidSrc</option>
-          <option value="autoembed">AutoEmbed</option>
-          <option value="2embed">2Embed</option>
-          <option value="embedsu">Embed.su</option>
-        </optgroup>
-      </select>
-    </div>
-  </div>
-  <div class="category-row" id="pika-genre-bar"></div>
-
-  <!-- Pikashow Pages -->
-  <div id="pika-home" class="pika-page">
-    <div id="pika-hero"></div>
-    <div id="pika-rows"></div>
-  </div>
-  <div id="pika-search-page" class="pika-page hidden">
-    <div class="page-title">🔍 <span id="pika-sq"></span></div>
-    <div id="pika-search-grid" class="pgrid"></div>
-  </div>
-  <div id="pika-detail-page" class="pika-page hidden">
-    <div id="pika-detail"></div>
-  </div>
-  <div id="pika-mylist-page" class="pika-page hidden">
-    <div class="page-title">❤️ My List</div>
-    <div id="pika-mylist-grid" class="pgrid"></div>
-  </div>
-  <div id="pika-continue-page" class="pika-page hidden">
-    <div class="page-title">▶ Continue Watching</div>
-    <div id="pika-continue-grid" class="pgrid"></div>
-  </div>
-
-  <!-- Pikashow player modal — redesigned -->
-  <div id="pika-player" class="pika-player-modal hidden">
-    <!-- TOP BAR -->
-    <div class="pp-topbar" id="pp-topbar">
-      <button class="pp-back" onclick="fpClose()" tabindex="0">‹ Back</button>
-      <div class="pp-title-wrap">
-        <span id="fp-title" class="pp-title"></span>
-        <span id="pp-ep-info" class="pp-ep-info"></span>
-      </div>
-      <div class="pp-top-actions">
-        <button id="fp-hindi" class="pp-btn pp-hindi-btn" onclick="fpToggleHindi()" tabindex="0">🇮🇳 Hindi</button>
-        <button class="pp-btn" onclick="fpFullscreen()" tabindex="0" title="Fullscreen">⛶</button>
-        <button class="pp-btn pp-x" onclick="fpClose()" tabindex="0">✕</button>
-      </div>
-    </div>
-
-    <!-- MAIN: player + sidebar -->
-    <div class="pp-main">
-      <!-- Player area -->
-      <div class="pp-player-wrap" id="pp-player-wrap">
-
-        <!-- Built-in SHPlayer (direct stream) -->
-        <div id="pp-shplayer" style="width:100%;height:100%;display:none;position:absolute;inset:0">
-          <!-- SHPlayer injected here -->
-        </div>
-
-        <!-- Iframe embed (fallback / embed mode) -->
-        <div id="pp-iframe-wrap" style="width:100%;height:100%;position:absolute;inset:0">
-          <iframe id="fp-iframe" allowfullscreen
-            allow="autoplay;fullscreen;encrypted-media;picture-in-picture;web-share"
-            referrerpolicy="no-referrer" frameborder="0"
-            style="width:100%;height:100%;border:none;display:block"></iframe>
-          <div id="fp-loading" class="pp-loading">
-            <svg class="pp-spin-svg" viewBox="0 0 44 44">
-              <circle cx="22" cy="22" r="18" fill="none" stroke="#e50914"
-                stroke-width="3" stroke-dasharray="80 40" stroke-linecap="round">
-                <animateTransform attributeName="transform" type="rotate"
-                  from="0 22 22" to="360 22 22" dur=".9s" repeatCount="indefinite"/>
-              </circle>
-            </svg>
-            <p id="fp-load-msg">Extracting stream…</p>
-          </div>
-        </div>
-
-        <!-- Player mode toggle bar -->
-        <div class="pp-mode-bar" id="pp-mode-bar">
-          <button class="pp-mode-btn on" id="pp-btn-builtin" onclick="fpSetMode('builtin')">⚡ Built-in</button>
-          <button class="pp-mode-btn" id="pp-btn-embed" onclick="fpSetMode('embed')">🌐 Embed</button>
-        </div>
-
-        <!-- Hindi hint -->
-        <div id="fp-hindi-hint" class="pp-hint hidden">
-          <span>Audio not in Hindi?</span>
-          <button class="pp-hint-btn" onclick="fpNextHindiSrc()">Try next source</button>
-          <button class="pp-hint-x" onclick="this.parentElement.classList.add('hidden')">✕</button>
-        </div>
-      </div>
-
-      <!-- Side panel: source + episodes -->
-      <div class="pp-sidebar" id="pp-sidebar">
-        <!-- Source selector -->
-        <div class="pp-section">
-          <div class="pp-section-title">Stream Source</div>
-          <div class="pp-src-grid" id="pp-src-grid">
-            <button class="pp-src-btn on" data-src="8stream"     onclick="fpSwitchSrc('8stream')">8Stream<span class="pp-src-tag">🇮🇳</span></button>
-            <button class="pp-src-btn"   data-src="vixsrc"      onclick="fpSwitchSrc('vixsrc')">VixSrc<span class="pp-src-tag">🇮🇳</span></button>
-            <button class="pp-src-btn"   data-src="cinesrc"     onclick="fpSwitchSrc('cinesrc')">CineSrc<span class="pp-src-tag">🇮🇳</span></button>
-            <button class="pp-src-btn"   data-src="multiembed"  onclick="fpSwitchSrc('multiembed')">MultiEmbed</button>
-            <button class="pp-src-btn"   data-src="vidlink"     onclick="fpSwitchSrc('vidlink')">VidLink</button>
-            <button class="pp-src-btn"   data-src="fsapi"       onclick="fpSwitchSrc('fsapi')">FSApi<span class="pp-src-tag">🇮🇳</span></button>
-            <button class="pp-src-btn"   data-src="gdrive"      onclick="fpSwitchSrc('gdrive')">GDrive<span class="pp-src-tag">🇮🇳</span></button>
-            <button class="pp-src-btn"   data-src="vidsrc"      onclick="fpSwitchSrc('vidsrc')">VidSrc</button>
-            <button class="pp-src-btn"   data-src="autoembed"   onclick="fpSwitchSrc('autoembed')">AutoEmbed</button>
-            <button class="pp-src-btn"   data-src="2embed"      onclick="fpSwitchSrc('2embed')">2Embed</button>
-            <button class="pp-src-btn"   data-src="embedsu"     onclick="fpSwitchSrc('embedsu')">Embed.su</button>
-          </div>
-        </div>
-
-        <!-- Season / Episode for TV -->
-        <div id="pp-season-wrap" class="pp-section hidden">
-          <div class="pp-section-title">Season</div>
-          <div class="pp-season-scroll" id="pp-season-scroll"></div>
-        </div>
-
-        <div id="pp-ep-wrap" class="pp-section hidden">
-          <div class="pp-ep-header">
-            <div class="pp-section-title" id="pp-ep-section-title">Episodes</div>
-          </div>
-          <div class="pp-ep-scroll" id="pp-ep-scroll"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+<div id="tab-pikashow" class="tab hidden row-layout">
   <!-- Pikashow left rail -->
   <div class="pika-rail">
-    <button onclick="pikaHome()">🏠</button>
-    <button onclick="pikaNav('movie')">🎬</button>
-    <button onclick="pikaNav('tv')">📺</button>
-    <button onclick="pikaNav('hindi')">🇮🇳</button>
-    <button onclick="pikaNav('anime')">🌸</button>
-    <button onclick="pikaPage('mylist')">❤️</button>
-    <button onclick="pikaPage('continue')">▶</button>
+    <button id="pika-btn-home" onclick="pikaHome()" title="Home">🏠</button>
+    <button onclick="pikaNav('movie')" title="Movies">🎬</button>
+    <button onclick="pikaNav('tv')" title="TV Shows">📺</button>
+    <button onclick="pikaNav('hindi')" title="Hindi">🇮🇳</button>
+    <button onclick="pikaNav('anime')" title="Anime">🌸</button>
+    <button onclick="pikaPage('mylist')" title="My List">❤️</button>
+    <button onclick="pikaPage('continue')" title="Continue Watching">▶</button>
+  </div>
+
+  <div class="tab-main">
+    <div class="topbar">
+      <div class="pika-brand">🎬 <b>Pikashow</b></div>
+      <div class="search-box" id="pika-search-box">
+        <div class="search-box-inner">
+          <input id="pika-q" placeholder="Movies, Series, Anime…" onkeydown="if(event.key==='Enter')pikaSearch()" autocomplete="off"/>
+          <button onclick="pikaSearch()">🔍</button>
+        </div>
+        <!-- history dropdown injected here by JS -->
+      </div>
+      <div class="topbar-right">
+        <select id="pika-lang" onchange="pikaHome()" title="Language">
+          <option value="">🌐 All</option>
+          <option value="hi">🇮🇳 Hindi</option><option value="en">🇺🇸 English</option>
+          <option value="ta">Tamil</option><option value="te">Telugu</option>
+          <option value="ml">Malayalam</option><option value="kn">Kannada</option>
+          <option value="bn">Bengali</option><option value="mr">Marathi</option>
+          <option value="pa">Punjabi</option><option value="ko">Korean</option>
+          <option value="ja">Japanese</option><option value="zh">Chinese</option>
+        </select>
+        <select id="pika-src" title="Stream Source">
+          <optgroup label="🇮🇳 Indian (Best for Hindi)">
+            <option value="8stream">8Stream (Hindi/Tamil/Telugu)</option>
+            <option value="vixsrc">VixSrc Indian</option>
+            <option value="cinesrc">CineSrc Indian</option>
+            <option value="multiembed">MultiEmbed Hindi</option>
+            <option value="vidlink">VidLink Hindi</option>
+            <option value="fsapi">FSApi Indian</option>
+            <option value="gdrive">GDrive Player</option>
+          </optgroup>
+          <optgroup label="🌐 Global">
+            <option value="vidsrc">VidSrc</option>
+            <option value="autoembed">AutoEmbed</option>
+            <option value="2embed">2Embed</option>
+            <option value="embedsu">Embed.su</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+    <div class="category-row" id="pika-genre-bar"></div>
+
+    <!-- Pikashow Pages -->
+    <div id="pika-home" class="pika-page">
+      <div id="pika-hero"></div>
+      <div id="pika-rows"></div>
+    </div>
+    <div id="pika-search-page" class="pika-page hidden">
+      <div class="page-title">🔍 <span id="pika-sq"></span></div>
+      <div id="pika-search-grid" class="pgrid"></div>
+    </div>
+    <div id="pika-detail-page" class="pika-page hidden">
+      <div id="pika-detail"></div>
+    </div>
+    <div id="pika-mylist-page" class="pika-page hidden">
+      <div class="page-title">❤️ My List</div>
+      <div id="pika-mylist-grid" class="pgrid"></div>
+    </div>
+    <div id="pika-continue-page" class="pika-page hidden">
+      <div class="page-title">▶ Continue Watching</div>
+      <div id="pika-continue-grid" class="pgrid"></div>
+    </div>
+
+    <!-- Pikashow player modal — redesigned -->
+    <div id="pika-player" class="pika-player-modal hidden">
+      <!-- TOP BAR -->
+      <div class="pp-topbar" id="pp-topbar">
+        <button class="pp-back" onclick="fpClose()" tabindex="0">‹ Back</button>
+        <div class="pp-title-wrap">
+          <span id="fp-title" class="pp-title"></span>
+          <span id="pp-ep-info" class="pp-ep-info"></span>
+        </div>
+        <div class="pp-top-actions">
+          <button id="fp-hindi" class="pp-btn pp-hindi-btn" onclick="fpToggleHindi()" tabindex="0">🇮🇳 Hindi</button>
+          <button class="pp-btn" onclick="fpFullscreen()" tabindex="0" title="Fullscreen">⛶</button>
+          <button class="pp-btn pp-x" onclick="fpClose()" tabindex="0">✕</button>
+        </div>
+      </div>
+
+      <!-- MAIN: player + sidebar -->
+      <div class="pp-main">
+        <!-- Player area -->
+        <div class="pp-player-wrap" id="pp-player-wrap">
+
+          <!-- Built-in SHPlayer (direct stream) -->
+          <div id="pp-shplayer" style="width:100%;height:100%;display:none;position:absolute;inset:0">
+            <!-- SHPlayer injected here -->
+          </div>
+
+          <!-- Iframe embed (fallback / embed mode) -->
+          <div id="pp-iframe-wrap" style="width:100%;height:100%;position:absolute;inset:0">
+            <iframe id="fp-iframe" allowfullscreen
+              allow="autoplay;fullscreen;encrypted-media;picture-in-picture;web-share"
+              referrerpolicy="no-referrer" frameborder="0"
+              style="width:100%;height:100%;border:none;display:block"></iframe>
+            <div id="fp-loading" class="pp-loading">
+              <svg class="pp-spin-svg" viewBox="0 0 44 44">
+                <circle cx="22" cy="22" r="18" fill="none" stroke="#e50914"
+                  stroke-width="3" stroke-dasharray="80 40" stroke-linecap="round">
+                  <animateTransform attributeName="transform" type="rotate"
+                    from="0 22 22" to="360 22 22" dur=".9s" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+              <p id="fp-load-msg">Extracting stream…</p>
+            </div>
+          </div>
+
+          <!-- Player mode toggle bar -->
+          <div class="pp-mode-bar" id="pp-mode-bar">
+            <button class="pp-mode-btn on" id="pp-btn-builtin" onclick="fpSetMode('builtin')">⚡ Built-in</button>
+            <button class="pp-mode-btn" id="pp-btn-embed" onclick="fpSetMode('embed')">🌐 Embed</button>
+          </div>
+
+          <!-- Hindi hint -->
+          <div id="fp-hindi-hint" class="pp-hint hidden">
+            <span>Audio not in Hindi?</span>
+            <button class="pp-hint-btn" onclick="fpNextHindiSrc()">Try next source</button>
+            <button class="pp-hint-x" onclick="this.parentElement.classList.add('hidden')">✕</button>
+          </div>
+        </div>
+
+        <!-- Side panel: source + episodes -->
+        <div class="pp-sidebar" id="pp-sidebar">
+          <!-- Source selector -->
+          <div class="pp-section">
+            <div class="pp-section-title">Stream Source</div>
+            <div class="pp-src-grid" id="pp-src-grid">
+              <button class="pp-src-btn on" data-src="8stream"     onclick="fpSwitchSrc('8stream')">8Stream<span class="pp-src-tag">🇮🇳</span></button>
+              <button class="pp-src-btn"   data-src="vixsrc"      onclick="fpSwitchSrc('vixsrc')">VixSrc<span class="pp-src-tag">🇮🇳</span></button>
+              <button class="pp-src-btn"   data-src="cinesrc"     onclick="fpSwitchSrc('cinesrc')">CineSrc<span class="pp-src-tag">🇮🇳</span></button>
+              <button class="pp-src-btn"   data-src="multiembed"  onclick="fpSwitchSrc('multiembed')">MultiEmbed</button>
+              <button class="pp-src-btn"   data-src="vidlink"     onclick="fpSwitchSrc('vidlink')">VidLink</button>
+              <button class="pp-src-btn"   data-src="fsapi"       onclick="fpSwitchSrc('fsapi')">FSApi<span class="pp-src-tag">🇮🇳</span></button>
+              <button class="pp-src-btn"   data-src="gdrive"      onclick="fpSwitchSrc('gdrive')">GDrive<span class="pp-src-tag">🇮🇳</span></button>
+              <button class="pp-src-btn"   data-src="vidsrc"      onclick="fpSwitchSrc('vidsrc')">VidSrc</button>
+              <button class="pp-src-btn"   data-src="autoembed"   onclick="fpSwitchSrc('autoembed')">AutoEmbed</button>
+              <button class="pp-src-btn"   data-src="2embed"      onclick="fpSwitchSrc('2embed')">2Embed</button>
+              <button class="pp-src-btn"   data-src="embedsu"     onclick="fpSwitchSrc('embedsu')">Embed.su</button>
+            </div>
+          </div>
+
+          <!-- Season / Episode for TV -->
+          <div id="pp-season-wrap" class="pp-section hidden">
+            <div class="pp-section-title">Season</div>
+            <div class="pp-season-scroll" id="pp-season-scroll"></div>
+          </div>
+
+          <div id="pp-ep-wrap" class="pp-section hidden">
+            <div class="pp-ep-header">
+              <div class="pp-section-title" id="pp-ep-section-title">Episodes</div>
+            </div>
+            <div class="pp-ep-scroll" id="pp-ep-scroll"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -372,6 +376,15 @@
     </div>
 
     <div class="s-card">
+      <h3>⌨ On-Screen Keyboard</h3>
+      <p class="hint">Show a virtual keyboard when navigating into search fields with a remote or gamepad.</p>
+      <label style="flex-direction:row;align-items:center;gap:10px">
+        <input type="checkbox" id="osk-enabled-toggle" checked onchange="setOskEnabled(this.checked)">
+        <span>Enable On-Screen Keyboard</span>
+      </label>
+    </div>
+
+    <div class="s-card">
       <h3>ℹ About StremoHub v3</h3>
       <p><b>Version 3.0.0</b></p>
       <div class="about-list">
@@ -400,7 +413,7 @@
 <script src="/js/player.js"></script>
 <script src="/js/youtube.js"></script>
 <script src="/js/pikashow.js"></script>
-<script src="/js/pvr.js"></script>
+<script src="/js/pvr.js?v=2.1"></script>
 <script src="/js/settings.js"></script>
 <script src="/js/osk.js"></script>
 <script src="/js/remote.js"></script>

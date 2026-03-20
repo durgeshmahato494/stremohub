@@ -51,6 +51,8 @@ body { display: flex; }
 /* Tabs */
 .tab { position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg) }
 .tab.active { display:flex }
+.tab.row-layout { flex-direction:row }
+.tab-main { flex:1; display:flex; flex-direction:column; min-width:0; position:relative }
 
 /* Topbar */
 .topbar { height:54px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;padding:0 14px;flex-shrink:0;overflow:visible;position:relative;z-index:100 }
@@ -118,8 +120,8 @@ body { display: flex; }
 ══════════════════════════════════════════════════════════════ */
 .yt-page { flex:1;overflow-y:auto;padding-bottom:20px }
 .yt-page.hidden { display:none }
-.yt-rail { position:absolute;left:0;top:54px;bottom:0;display:flex;flex-direction:column;gap:2px;padding:8px 3px;z-index:10 }
-.yt-rail button { background:none;border:none;color:var(--t3);font-size:17px;padding:8px;cursor:pointer;border-radius:6px }
+.yt-rail { background:var(--bg2);border-right:1px solid var(--bdr);width:54px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0;z-index:10;flex-shrink:0 }
+.yt-rail button { background:none;border:none;color:var(--t3);font-size:18px;padding:10px;cursor:pointer;border-radius:6px;width:42px;display:flex;justify-content:center }
 .yt-rail button:hover,.yt-rail button:focus-visible { background:var(--bg3);color:var(--t1);outline:2px solid var(--focus) }
 
 .yt-row { margin-bottom:20px }
@@ -131,7 +133,7 @@ body { display: flex; }
 .yt-scroll::-webkit-scrollbar { height:0 }
 
 /* Video grid */
-.vgrid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:4px 14px }
+.vgrid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:4px 14px;scroll-padding:80px 0 }
 .vcard { background:var(--bg2);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:.18s;border:1px solid transparent }
 .vcard:hover { transform:translateY(-2px);border-color:var(--bdr);box-shadow:0 5px 18px rgba(0,0,0,.5) }
 .vcard:focus-visible { outline:2px solid var(--focus);outline-offset:1px }
@@ -186,10 +188,10 @@ body { display: flex; }
    PIKASHOW
 ══════════════════════════════════════════════════════════════ */
 .pika-brand { font-size:16px;font-weight:900;color:var(--acc);flex-shrink:0 }
-.pika-page { flex:1;overflow-y:auto;padding-bottom:20px }
+.pika-page { flex:1;overflow-y:auto;padding-bottom:20px;scroll-padding:80px 0 }
 .pika-page.hidden { display:none }
-.pika-rail { position:absolute;left:0;top:54px;bottom:0;display:flex;flex-direction:column;gap:2px;padding:8px 3px;z-index:10 }
-.pika-rail button { background:none;border:none;color:var(--t3);font-size:17px;padding:8px;cursor:pointer;border-radius:6px }
+.pika-rail { background:var(--bg2);border-right:1px solid var(--bdr);width:54px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0;z-index:10;flex-shrink:0 }
+.pika-rail button { background:none;border:none;color:var(--t3);font-size:18px;padding:10px;cursor:pointer;border-radius:6px;width:42px;display:flex;justify-content:center }
 .pika-rail button:hover,.pika-rail button:focus-visible { background:var(--bg3);color:var(--t1);outline:2px solid var(--focus) }
 
 #pika-hero { width:100%;height:340px;background-size:cover;background-position:center;position:relative;display:flex;align-items:flex-end;flex-shrink:0 }
@@ -206,7 +208,7 @@ body { display: flex; }
 .pika-scroll { display:flex;gap:9px;overflow-x:auto;padding:0 14px 8px }
 .pika-scroll::-webkit-scrollbar { height:0 }
 
-.pgrid { display:grid;grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:11px;padding:0 14px }
+.pgrid { display:grid;grid-template-columns:repeat(auto-fill,minmax(142px,1fr));gap:11px;padding:0 14px;scroll-padding:80px 0 }
 .pcard { position:relative;border-radius:var(--r);overflow:hidden;cursor:pointer;transition:.18s;background:var(--bg2);flex-shrink:0;width:142px }
 .pgrid .pcard { width:auto }
 .pcard:hover { transform:scale(1.04);z-index:2 }
@@ -284,8 +286,8 @@ body { display: flex; }
    PVR / LIVE TV — Kodi style with keyboard nav
 ══════════════════════════════════════════════════════════════ */
 .pvr-layout { flex:1;display:flex;overflow:hidden }
-.pvr-groups { width:185px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bdr);overflow-y:auto;display:flex;flex-direction:column }
-.pvr-channels { width:242px;flex-shrink:0;border-right:1px solid var(--bdr);overflow-y:auto }
+.pvr-groups { display:none }
+.pvr-channels { width:320px;flex-shrink:0;border-right:1px solid var(--bdr);overflow-y:auto }
 .pvr-player { flex:1;background:#000;position:relative;overflow:hidden;display:flex;flex-direction:column }
 .pvr-panel-title { padding:9px 12px;font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--bdr);flex-shrink:0 }
 .pvr-search { flex:1;max-width:260px;background:var(--bg3);border:1px solid var(--bdr);color:var(--t1);border-radius:16px;padding:5px 12px;font-size:12px;outline:none }
@@ -683,7 +685,9 @@ body.ir-active .ir-focused {
 /* Bigger focus ring for cards */
 body.ir-active .vcard.ir-focused,
 body.ir-active .pcard.ir-focused,
-body.ir-active .wcard.ir-focused {
+body.ir-active .wcard.ir-focused,
+body.ir-active .vcompact.ir-focused,
+body.ir-active .yt-avatar-row.ir-focused {
   outline: 3px solid #3b82f6 !important;
   box-shadow: 0 0 0 6px rgba(59,130,246,.3), 0 6px 24px rgba(0,0,0,.6) !important;
   transform: scale(1.04);
